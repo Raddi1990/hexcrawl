@@ -1,0 +1,9 @@
+<?php
+// Admin-Zugangsdaten: Kopie dieser Datei nach config.php erstellen und Werte anpassen.
+// Die Kartenansicht selbst ist frei zugänglich (kein Login nötig). Nur wer diesen
+// Benutzernamen + dieses Passwort eingibt, kommt in den Admin-Bereich (/admin/) und
+// darf z.B. Karten anlegen/kalibrieren oder den Nebel zurücksetzen.
+return [
+  'admin_username' => 'admin',
+  'admin_password' => 'bitte-aendern',
+];

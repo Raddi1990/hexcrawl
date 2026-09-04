@@ -1,0 +1,7 @@
+# Zugangsdaten – lokal aus config.php.example erstellen
+data/config.php
+
+# Laufzeitdaten (werden zur Laufzeit generiert, nicht Teil des Quellcodes)
+data/maps.json
+data/state/*.json
+maps/*/
