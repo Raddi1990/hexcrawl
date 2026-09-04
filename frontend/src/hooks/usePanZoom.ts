@@ -25,7 +25,8 @@ export function usePanZoom(
     // effect run -- otherwise callbacks would keep seeing stale props forever.
     const instance = new PanZoom(viewport, world, {
       ...optionsRef.current,
-      onTap: (x, y) => optionsRef.current.onTap?.(x, y),
+      onTap: (x, y, e) => optionsRef.current.onTap?.(x, y, e),
+      onDoubleTap: (x, y) => optionsRef.current.onDoubleTap?.(x, y),
       shouldPan: (e) => optionsRef.current.shouldPan?.(e) ?? true,
     });
     panZoomRef.current = instance;

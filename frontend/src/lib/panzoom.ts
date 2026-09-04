@@ -10,7 +10,13 @@ export interface PanZoomOptions {
   minScale?: number;
   maxScale?: number;
   doubleTapZoomFactor?: number;
-  onTap?: (clientX: number, clientY: number) => void;
+  /** Fires on every completed single tap/click (mouse, pen, or touch); `e` is the
+   * originating pointerup event, so callers can check e.g. `e.ctrlKey`. */
+  onTap?: (clientX: number, clientY: number, e: PointerEvent) => void;
+  /** Touch-only: fires on a detected double-tap. Return true to mark it handled and
+   * suppress the default double-tap-to-zoom behavior; return false/undefined to let
+   * the default zoom happen. */
+  onDoubleTap?: (clientX: number, clientY: number) => boolean | void;
   /** Return false to exclude a pointer from pan/pinch/tap entirely (e.g. paint-mode shift-drag). */
   shouldPan?: (e: PointerEvent) => boolean;
 }
@@ -67,6 +73,7 @@ export class PanZoom {
   private tapStart: TapStart | null = null;
   private lastTap: TapStart | null = null;
   private onTapCallback: PanZoomOptions["onTap"] | null;
+  private onDoubleTapCallback: PanZoomOptions["onDoubleTap"] | null;
   private shouldPanCallback: PanZoomOptions["shouldPan"] | null;
 
   private rafId: number | null = null;
@@ -91,6 +98,7 @@ export class PanZoom {
     this.baseScale = this.scale;
     this.doubleTapZoomFactor = opts.doubleTapZoomFactor ?? 3;
     this.onTapCallback = opts.onTap ?? null;
+    this.onDoubleTapCallback = opts.onDoubleTap ?? null;
     this.shouldPanCallback = opts.shouldPan ?? null;
 
     this.viewport.style.touchAction = "none";
@@ -196,7 +204,7 @@ export class PanZoom {
     }
 
     if (wasSingleTap && this.pointers.size === 0) {
-      this.onTapCallback?.(e.clientX, e.clientY);
+      this.onTapCallback?.(e.clientX, e.clientY, e);
       if (e.pointerType === "touch") this.handleTap(e.clientX, e.clientY);
     }
   }
@@ -205,7 +213,10 @@ export class PanZoom {
     const now = Date.now();
     if (this.lastTap && now - this.lastTap.time < 350 && dist(this.lastTap, { x: clientX, y: clientY }) < 40) {
       this.lastTap = null;
-      this.toggleDoubleTapZoom(clientX, clientY);
+      const handled = this.onDoubleTapCallback?.(clientX, clientY);
+      if (!handled) {
+        this.toggleDoubleTapZoom(clientX, clientY);
+      }
     } else {
       this.lastTap = { x: clientX, y: clientY, time: now };
     }

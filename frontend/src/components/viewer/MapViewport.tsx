@@ -20,7 +20,7 @@ interface MapViewportProps {
   onBrushStart?: (pointerId: number, hex: AxialHex) => void;
   onBrushMove?: (hex: AxialHex) => void;
   onBrushEnd?: () => void;
-  /** Drag the token dot, or (when not in paint mode) tap anywhere to place it there directly. */
+  /** Drag the token dot, or (outside paint mode) Ctrl+click / double-tap anywhere to place it there directly. */
   onMoveToken?: (q: number, r: number) => void;
 }
 
@@ -54,7 +54,7 @@ export function MapViewport({
   const mapRef = useRef(map);
   mapRef.current = map;
 
-  const handleTap = (clientX: number, clientY: number) => {
+  const handleTap = (clientX: number, clientY: number, sourceEvent: PointerEvent) => {
     if (!isAdmin) return;
     const panZoom = panZoomRef.current;
     if (!panZoom) return;
@@ -62,17 +62,31 @@ export function MapViewport({
     const hex = pixelToHex(world.x, world.y, mapConfig(map));
     if (paintMode) {
       onPaintHex?.(hex);
-    } else {
-      // Outside paint mode, a plain tap places the token directly -- faster than
-      // hunting for the existing dot and dragging it, dragging still works too.
+    } else if (sourceEvent.ctrlKey || sourceEvent.metaKey) {
+      // Ctrl+click (Cmd+click on Mac) places the token directly on desktop.
+      // Plain clicks stay reserved for panning/selecting, so they can't misfire this.
       onMoveToken?.(hex.q, hex.r);
     }
+  };
+
+  // Touch has no Ctrl key, so a double-tap on the map is the touch equivalent for
+  // placing the token -- this intentionally overrides the default double-tap-zoom
+  // for admins outside paint mode; players and paint mode keep the default zoom.
+  const handleDoubleTap = (clientX: number, clientY: number): boolean => {
+    if (!isAdmin || paintMode || !onMoveToken) return false;
+    const panZoom = panZoomRef.current;
+    if (!panZoom) return false;
+    const world = panZoom.screenToWorld(clientX, clientY);
+    const hex = pixelToHex(world.x, world.y, mapConfig(map));
+    onMoveToken(hex.q, hex.r);
+    return true;
   };
 
   const panZoomRef = usePanZoom(viewportRef, worldRef, {
     minScale: 0.1,
     maxScale: 6,
     onTap: handleTap,
+    onDoubleTap: handleDoubleTap,
     // While shift-painting, PanZoom must not also interpret the drag as a pan.
     shouldPan: (e) => !(paintMode && e.shiftKey),
   });

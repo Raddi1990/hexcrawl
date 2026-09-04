@@ -163,9 +163,9 @@ export function AdminCalibratePage() {
           {saving ? "Speichert…" : "Speichern"}
         </Button>
         <p className="text-xs text-muted-foreground">
-          Die Vorschau rechts zeigt das Raster live mit den obigen Werten, inklusive Pan/Zoom. Auf die Karte tippen
-          oder den Token ziehen setzt ihn direkt (live für alle Zuschauer). Klick-zum-Setzen des Ursprungs ist noch
-          nicht umgesetzt -- Ursprung bitte über die Zahlenfelder justieren.
+          Die Vorschau rechts zeigt das Raster live mit den obigen Werten, inklusive Pan/Zoom. Strg-Klick auf die
+          Karte (Tablet: Doppeltipp), oder den Token ziehen, setzt ihn direkt (live für alle Zuschauer).
+          Klick-zum-Setzen des Ursprungs ist noch nicht umgesetzt -- Ursprung bitte über die Zahlenfelder justieren.
         </p>
       </div>
 

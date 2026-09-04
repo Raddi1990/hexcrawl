@@ -111,6 +111,10 @@ export function ControlPanel(props: ControlPanelProps) {
               />
             </div>
 
+            <p className="text-xs text-muted-foreground">
+              Strg-Klick auf die Karte (Tablet: Doppeltipp) setzt den Token direkt dorthin.
+            </p>
+
             <div className="flex items-center justify-between">
               <Label htmlFor="token-visible">Token für Spieler sichtbar</Label>
               <Switch id="token-visible" checked={tokenVisible} onCheckedChange={onToggleTokenVisible} />
