@@ -90,23 +90,26 @@ export function ControlPanel(props: ControlPanelProps) {
             <Label htmlFor="grid-toggle">Hex-Raster anzeigen</Label>
             <Switch id="grid-toggle" checked={gridVisible} onCheckedChange={onToggleGrid} />
           </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="fog-opacity">Nebel-Deckkraft (nur lokal)</Label>
-            <Slider
-              id="fog-opacity"
-              min={0}
-              max={100}
-              step={1}
-              value={[fogOpacity]}
-              onValueChange={([v]) => onFogOpacityChange(v)}
-            />
-          </div>
         </div>
 
         {isAdmin && (
           <div className="flex flex-col gap-4 border-t border-border pt-4">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Spielleitung</p>
+
+            {/* Admin-only by design: this only dims the fog canvas locally (never
+                touches server state), but letting a player use it would let them
+                see through fog they haven't actually revealed on their own screen. */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="fog-opacity">Nebel-Deckkraft (nur lokal, GM-Blick durch den Nebel)</Label>
+              <Slider
+                id="fog-opacity"
+                min={0}
+                max={100}
+                step={1}
+                value={[fogOpacity]}
+                onValueChange={([v]) => onFogOpacityChange(v)}
+              />
+            </div>
 
             <div className="flex items-center justify-between">
               <Label htmlFor="token-visible">Token für Spieler sichtbar</Label>
@@ -117,6 +120,11 @@ export function ControlPanel(props: ControlPanelProps) {
               <Label htmlFor="paint-mode">Hex-Malmodus</Label>
               <Switch id="paint-mode" checked={paintMode} onCheckedChange={onTogglePaintMode} />
             </div>
+            {paintMode && (
+              <p className="-mt-2 text-xs text-muted-foreground">
+                Klick: einzelnes Hex umschalten. Umschalt-Taste + Ziehen: mehrere Hexe in einem Zug malen.
+              </p>
+            )}
 
             {paintMode && (
               <Button variant="outline" size="sm" onClick={onUndo} disabled={!canUndo}>

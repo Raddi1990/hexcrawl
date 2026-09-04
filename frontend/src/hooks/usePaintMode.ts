@@ -1,15 +1,24 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { type AxialHex, hexKey } from "@/lib/hexgrid";
 
 interface PaintAction {
-  hex: AxialHex;
-  wasRevealed: boolean;
+  hexes: AxialHex[];
+  revealed: boolean;
 }
 
-/** Ported from viewer.js's paint mode: click-to-toggle a hex with an undo stack.
- * Simplified vs. the original -- the shift-drag multi-hex brush stroke isn't ported
- * yet, only single-hex click toggling. Each toggle is self-inverse, so undo just
- * replays the same toggle again (same trick the original used). */
+interface BrushState {
+  active: boolean;
+  pointerId: number | null;
+  revealing: boolean;
+  lastKey: string | null;
+  changes: AxialHex[];
+}
+
+const IDLE_BRUSH: BrushState = { active: false, pointerId: null, revealing: true, lastKey: null, changes: [] };
+
+/** Ported from viewer.js's paint mode: click-to-toggle a single hex, and (new)
+ * shift-drag to paint/erase a whole stroke of hexes in one gesture, both with a
+ * combined undo stack. Each toggle/stroke is self-inverse, so undo just replays it. */
 export function usePaintMode(
   revealedHexes: Set<string>,
   revealHexes: (hexes: AxialHex[]) => void,
@@ -18,27 +27,73 @@ export function usePaintMode(
   const [active, setActive] = useState(false);
   const [undoStack, setUndoStack] = useState<PaintAction[]>([]);
 
+  const revealedHexesRef = useRef(revealedHexes);
+  revealedHexesRef.current = revealedHexes;
+
+  const brushRef = useRef<BrushState>(IDLE_BRUSH);
+
   const paintHex = useCallback(
     (hex: AxialHex) => {
-      const wasRevealed = revealedHexes.has(hexKey(hex.q, hex.r));
+      const wasRevealed = revealedHexesRef.current.has(hexKey(hex.q, hex.r));
       if (wasRevealed) {
         hideHexes([hex]);
       } else {
         revealHexes([hex]);
       }
-      setUndoStack((stack) => [...stack, { hex, wasRevealed }]);
+      setUndoStack((stack) => [...stack, { hexes: [hex], revealed: !wasRevealed }]);
     },
-    [revealedHexes, revealHexes, hideHexes],
+    [hideHexes, revealHexes],
   );
+
+  const applyBrushHex = useCallback(
+    (hex: AxialHex) => {
+      const brush = brushRef.current;
+      if (!brush.active) return;
+      const key = hexKey(hex.q, hex.r);
+      if (key === brush.lastKey) return;
+      brush.lastKey = key;
+      const isRevealed = revealedHexesRef.current.has(key);
+      if (isRevealed === brush.revealing) return; // already in the target state
+      if (brush.revealing) {
+        revealHexes([hex]);
+      } else {
+        hideHexes([hex]);
+      }
+      brush.changes.push(hex);
+    },
+    [hideHexes, revealHexes],
+  );
+
+  /** Pointer went down with shift held: decide the stroke's direction from the
+   * first hex under the cursor (same as the original), then apply it. */
+  const startBrush = useCallback(
+    (pointerId: number, hex: AxialHex) => {
+      const revealing = !revealedHexesRef.current.has(hexKey(hex.q, hex.r));
+      brushRef.current = { active: true, pointerId, revealing, lastKey: null, changes: [] };
+      applyBrushHex(hex);
+    },
+    [applyBrushHex],
+  );
+
+  const moveBrush = applyBrushHex;
+
+  const endBrush = useCallback(() => {
+    const brush = brushRef.current;
+    if (!brush.active) return;
+    if (brush.changes.length > 0) {
+      setUndoStack((stack) => [...stack, { hexes: brush.changes, revealed: brush.revealing }]);
+    }
+    brushRef.current = IDLE_BRUSH;
+  }, []);
 
   const undo = useCallback(() => {
     setUndoStack((stack) => {
       if (stack.length === 0) return stack;
       const last = stack[stack.length - 1];
-      if (last.wasRevealed) {
-        revealHexes([last.hex]);
+      if (last.revealed) {
+        hideHexes(last.hexes);
       } else {
-        hideHexes([last.hex]);
+        revealHexes(last.hexes);
       }
       return stack.slice(0, -1);
     });
@@ -46,5 +101,15 @@ export function usePaintMode(
 
   const clearUndoStack = useCallback(() => setUndoStack([]), []);
 
-  return { active, setActive, paintHex, undo, canUndo: undoStack.length > 0, clearUndoStack };
+  return {
+    active,
+    setActive,
+    paintHex,
+    startBrush,
+    moveBrush,
+    endBrush,
+    undo,
+    canUndo: undoStack.length > 0,
+    clearUndoStack,
+  };
 }

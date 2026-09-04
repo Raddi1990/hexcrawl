@@ -47,6 +47,9 @@ export function ViewerPage() {
     paint.clearUndoStack();
   }
 
+  const adminLink = isAdmin ? "/admin" : "/login";
+  const adminLinkLabel = isAdmin ? "Admin" : "Anmelden";
+
   if (maps === null) {
     return <div className="flex h-screen items-center justify-center text-muted-foreground">Lade…</div>;
   }
@@ -55,11 +58,9 @@ export function ViewerPage() {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
         <p className="text-muted-foreground">Keine Karten vorhanden.</p>
-        {isAdmin && (
-          <Button asChild>
-            <Link to="/admin">Zum Admin-Bereich</Link>
-          </Button>
-        )}
+        <Button asChild>
+          <Link to={adminLink}>{isAdmin ? "Zum Admin-Bereich" : "Als Admin anmelden"}</Link>
+        </Button>
       </div>
     );
   }
@@ -77,9 +78,15 @@ export function ViewerPage() {
         tokenVisible={tokenVisible}
         isAdmin={isAdmin}
         gridVisible={gridVisible}
-        fogOpacity={fogOpacity}
+        // Non-admins always see full fog opacity, even if a stale lower value sits in
+        // this browser's localStorage from a GM who previously used the same device --
+        // the opacity control itself is admin-only (see ControlPanel) for the same reason.
+        fogOpacity={isAdmin ? fogOpacity : 100}
         paintMode={isAdmin && paint.active}
         onPaintHex={paint.paintHex}
+        onBrushStart={paint.startBrush}
+        onBrushMove={paint.moveBrush}
+        onBrushEnd={paint.endBrush}
         onMoveToken={moveToken}
       />
 
@@ -104,11 +111,9 @@ export function ViewerPage() {
         />
       </div>
 
-      {isAdmin && (
-        <Button asChild variant="secondary" size="sm" className="no-pan absolute left-3 top-3">
-          <Link to="/admin">Admin</Link>
-        </Button>
-      )}
+      <Button asChild variant="secondary" size="sm" className="no-pan absolute left-3 top-3">
+        <Link to={adminLink}>{adminLinkLabel}</Link>
+      </Button>
     </div>
   );
 }

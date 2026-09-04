@@ -41,7 +41,7 @@ export function AdminCalibratePage() {
     });
   }, [mapId]);
 
-  const { revealedHexes, token, tokenVisible } = useMapState(mapId ?? null);
+  const { revealedHexes, token, tokenVisible, moveToken } = useMapState(mapId ?? null);
 
   function updateDraft<K extends keyof CalibrationDraft>(key: K, value: CalibrationDraft[K]) {
     setDraft((d) => (d ? { ...d, [key]: value } : d));
@@ -163,8 +163,9 @@ export function AdminCalibratePage() {
           {saving ? "Speichert…" : "Speichern"}
         </Button>
         <p className="text-xs text-muted-foreground">
-          Die Vorschau rechts zeigt das Raster live mit den obigen Werten, inklusive Pan/Zoom. Klick-zum-Setzen des
-          Ursprungs ist noch nicht umgesetzt -- Ursprung bitte über die Zahlenfelder justieren.
+          Die Vorschau rechts zeigt das Raster live mit den obigen Werten, inklusive Pan/Zoom. Auf die Karte tippen
+          oder den Token ziehen setzt ihn direkt (live für alle Zuschauer). Klick-zum-Setzen des Ursprungs ist noch
+          nicht umgesetzt -- Ursprung bitte über die Zahlenfelder justieren.
         </p>
       </div>
 
@@ -178,6 +179,7 @@ export function AdminCalibratePage() {
           gridVisible
           fogOpacity={100}
           paintMode={false}
+          onMoveToken={moveToken}
         />
       </div>
     </div>

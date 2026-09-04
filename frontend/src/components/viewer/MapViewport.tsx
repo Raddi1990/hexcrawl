@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { cn } from "@/lib/utils";
 import { type AxialHex, type HexGridConfig, pixelToHex, hexToPixel } from "@/lib/hexgrid";
 import { drawFog, drawGrid } from "@/lib/fog";
@@ -14,7 +14,13 @@ interface MapViewportProps {
   gridVisible: boolean;
   fogOpacity: number; // 0-100, local-only display setting
   paintMode: boolean;
+  /** Single click/tap while paintMode is on: toggle one hex. */
   onPaintHex?: (hex: AxialHex) => void;
+  /** Shift+drag while paintMode is on: paint/erase a whole stroke of hexes. */
+  onBrushStart?: (pointerId: number, hex: AxialHex) => void;
+  onBrushMove?: (hex: AxialHex) => void;
+  onBrushEnd?: () => void;
+  /** Drag the token dot, or (when not in paint mode) tap anywhere to place it there directly. */
   onMoveToken?: (q: number, r: number) => void;
 }
 
@@ -32,6 +38,9 @@ export function MapViewport({
   fogOpacity,
   paintMode,
   onPaintHex,
+  onBrushStart,
+  onBrushMove,
+  onBrushEnd,
   onMoveToken,
 }: MapViewportProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -41,20 +50,79 @@ export function MapViewport({
   const tokenRef = useRef<HTMLDivElement>(null);
   const [fogImage, setFogImage] = useState<HTMLImageElement | null>(null);
   const draggingRef = useRef(false);
+  const brushPointerIdRef = useRef<number | null>(null);
+  const mapRef = useRef(map);
+  mapRef.current = map;
 
   const handleTap = (clientX: number, clientY: number) => {
-    if (!isAdmin || !paintMode || !onPaintHex) return;
+    if (!isAdmin) return;
     const panZoom = panZoomRef.current;
     if (!panZoom) return;
     const world = panZoom.screenToWorld(clientX, clientY);
-    onPaintHex(pixelToHex(world.x, world.y, mapConfig(map)));
+    const hex = pixelToHex(world.x, world.y, mapConfig(map));
+    if (paintMode) {
+      onPaintHex?.(hex);
+    } else {
+      // Outside paint mode, a plain tap places the token directly -- faster than
+      // hunting for the existing dot and dragging it, dragging still works too.
+      onMoveToken?.(hex.q, hex.r);
+    }
   };
 
   const panZoomRef = usePanZoom(viewportRef, worldRef, {
     minScale: 0.1,
     maxScale: 6,
     onTap: handleTap,
+    // While shift-painting, PanZoom must not also interpret the drag as a pan.
+    shouldPan: (e) => !(paintMode && e.shiftKey),
   });
+
+  function resolveHexAtClient(clientX: number, clientY: number): AxialHex | null {
+    const panZoom = panZoomRef.current;
+    if (!panZoom) return null;
+    const world = panZoom.screenToWorld(clientX, clientY);
+    return pixelToHex(world.x, world.y, mapConfig(mapRef.current));
+  }
+
+  function handleViewportPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
+    if (!isAdmin || !paintMode || !e.shiftKey || !onBrushStart) return;
+    if ((e.target as HTMLElement).closest?.(".no-pan")) return;
+    const hex = resolveHexAtClient(e.clientX, e.clientY);
+    if (!hex) return;
+    brushPointerIdRef.current = e.pointerId;
+    onBrushStart(e.pointerId, hex);
+  }
+
+  // Window-level brush move/end listeners (a drag can leave the viewport element),
+  // wired once via a ref trampoline so callbacks never go stale without needing to
+  // tear down and re-add these on every render.
+  const brushCallbacksRef = useRef({ onBrushMove, onBrushEnd });
+  brushCallbacksRef.current = { onBrushMove, onBrushEnd };
+
+  useEffect(() => {
+    function handleMove(e: PointerEvent) {
+      if (brushPointerIdRef.current === null || e.pointerId !== brushPointerIdRef.current) return;
+      const panZoom = panZoomRef.current;
+      if (!panZoom) return;
+      const world = panZoom.screenToWorld(e.clientX, e.clientY);
+      const hex = pixelToHex(world.x, world.y, mapConfig(mapRef.current));
+      brushCallbacksRef.current.onBrushMove?.(hex);
+    }
+    function handleUp(e: PointerEvent) {
+      if (brushPointerIdRef.current === null || e.pointerId !== brushPointerIdRef.current) return;
+      brushPointerIdRef.current = null;
+      brushCallbacksRef.current.onBrushEnd?.();
+    }
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("pointerup", handleUp);
+    window.addEventListener("pointercancel", handleUp);
+    return () => {
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
+      window.removeEventListener("pointercancel", handleUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load the fog image once per map (used only as a canvas draw source, never shown directly).
   useEffect(() => {
@@ -106,6 +174,7 @@ export function MapViewport({
       ref={viewportRef}
       className="relative h-full w-full overflow-hidden bg-black"
       onContextMenu={(e) => e.preventDefault()}
+      onPointerDown={handleViewportPointerDown}
     >
       <div
         ref={worldRef}
