@@ -68,7 +68,11 @@ def health() -> dict:
 def public_config() -> dict:
     """Public, unauthenticated -- the frontend needs this before it knows whether
     it's even allowed to ask who's logged in."""
-    return {"require_login": get_settings().require_login}
+    settings = get_settings()
+    return {
+        "require_login": settings.require_login,
+        "user_management_url": settings.user_management_url or None,
+    }
 
 
 # The frontend build (see ../frontend, copied here by the root Dockerfile) is served

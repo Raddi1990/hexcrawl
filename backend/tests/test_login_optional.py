@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from tests.conftest import TEST_USER_MANAGEMENT_URL
 
 
 def _create_map(admin_client, name, tiny_png):
@@ -16,15 +17,15 @@ def _create_map(admin_client, name, tiny_png):
     return response.json()
 
 
-def test_config_reports_require_login_true_by_default(client):
+def test_config_reports_require_login_true_when_url_configured(client):
     response = client.get("/api/config")
     assert response.status_code == 200
-    assert response.json() == {"require_login": True}
+    assert response.json() == {"require_login": True, "user_management_url": TEST_USER_MANAGEMENT_URL}
 
 
-def test_config_reports_require_login_false_when_disabled(client, require_login_disabled):
+def test_config_reports_require_login_false_when_url_unset(client, require_login_disabled):
     response = client.get("/api/config")
-    assert response.json() == {"require_login": False}
+    assert response.json() == {"require_login": False, "user_management_url": None}
 
 
 def test_anonymous_can_list_maps_when_login_not_required(client, require_login_disabled):

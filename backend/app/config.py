@@ -18,11 +18,17 @@ class Settings(BaseSettings):
     cookie_secure: bool = False
     session_max_age_seconds: int = 60 * 60 * 24 * 7  # 7 days
 
-    # Off by default: the map viewer stays open to anyone with the link, matching the
-    # original behavior. Set to true only when accounts are actually being managed
-    # (e.g. via the optional external useradmin tool) -- otherwise turning this on
-    # would lock everyone out with no way to create accounts.
-    require_login: bool = False
+    # Empty by default: the map viewer stays open to anyone with the link, matching
+    # the original behavior. Point this at an external user-management tool's URL
+    # (e.g. the optional useradmin tool) to both require a login for the viewer AND
+    # surface a "manage users" link for it in the admin area -- leaving this empty
+    # with require_login forced on some other way would lock everyone out with no
+    # way to create accounts, so the login gate is deliberately tied to it.
+    user_management_url: str = ""
+
+    @property
+    def require_login(self) -> bool:
+        return bool(self.user_management_url.strip())
 
     max_image_dimension: int = 4096
 

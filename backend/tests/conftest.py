@@ -13,9 +13,10 @@ os.environ["HEXCRAWL_COOKIE_SECRET"] = "test-secret"
 os.environ["HEXCRAWL_ADMIN_USERNAME"] = "admin"
 os.environ["HEXCRAWL_ADMIN_PASSWORD"] = "test-password-123"
 # Matches production (the deployed server sets this explicitly): most tests exercise
-# the login-gated behavior. test_config_endpoint.py flips it off for individual tests
-# to cover the (default-off) open-access fallback.
-os.environ["HEXCRAWL_REQUIRE_LOGIN"] = "true"
+# the login-gated behavior. require_login_disabled below clears it for individual
+# tests to cover the (default-off, no URL configured) open-access fallback.
+os.environ["HEXCRAWL_USER_MANAGEMENT_URL"] = "https://example.invalid/manage"
+TEST_USER_MANAGEMENT_URL = os.environ["HEXCRAWL_USER_MANAGEMENT_URL"]
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -68,11 +69,11 @@ def player_client(admin_client: TestClient) -> TestClient:
 
 @pytest.fixture()
 def require_login_disabled(monkeypatch: pytest.MonkeyPatch):
-    """Flips HEXCRAWL_REQUIRE_LOGIN off for a single test, bypassing get_settings()'s
-    @lru_cache so the change actually takes effect."""
+    """Clears HEXCRAWL_USER_MANAGEMENT_URL for a single test, bypassing
+    get_settings()'s @lru_cache so the change actually takes effect."""
     from app.config import get_settings
 
-    monkeypatch.setenv("HEXCRAWL_REQUIRE_LOGIN", "false")
+    monkeypatch.setenv("HEXCRAWL_USER_MANAGEMENT_URL", "")
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()

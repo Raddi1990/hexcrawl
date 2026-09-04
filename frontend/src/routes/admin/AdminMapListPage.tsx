@@ -20,7 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { CreateMapDialog } from "./CreateMapDialog";
 
 export function AdminMapListPage() {
-  const { username, logout } = useAuth();
+  const { username, logout, userManagementUrl } = useAuth();
   const navigate = useNavigate();
   const [maps, setMaps] = useState<MapSummary[] | null>(null);
 
@@ -64,6 +64,13 @@ export function AdminMapListPage() {
           <Button variant="outline" asChild>
             <Link to="/">Zur Ansicht</Link>
           </Button>
+          {userManagementUrl && (
+            <Button variant="outline" asChild>
+              <a href={userManagementUrl} target="_blank" rel="noreferrer">
+                Nutzer verwalten
+              </a>
+            </Button>
+          )}
           <Button variant="outline" onClick={handleLogout}>
             Abmelden
           </Button>

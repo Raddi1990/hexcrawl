@@ -7,6 +7,7 @@ interface AuthState {
   username: string | null;
   role: UserRole | null;
   requireLogin: boolean;
+  userManagementUrl: string | null;
   loading: boolean;
 }
 
@@ -22,18 +23,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     username: null,
     role: null,
     requireLogin: false,
+    userManagementUrl: null,
     loading: true,
   });
 
   useEffect(() => {
     Promise.all([
-      api.get<{ require_login: boolean }>("/api/config"),
+      api.get<{ require_login: boolean; user_management_url: string | null }>("/api/config"),
       api.get<{ username: string; role: UserRole }>("/api/auth/me").catch(() => null),
     ]).then(([config, me]) => {
       setState({
         username: me?.username ?? null,
         role: me?.role ?? null,
         requireLogin: config.require_login,
+        userManagementUrl: config.user_management_url,
         loading: false,
       });
     });
