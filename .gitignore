@@ -5,3 +5,16 @@ data/config.php
 data/maps.json
 data/state/*.json
 maps/*/
+
+# --- Rework (FastAPI + React): Laufzeitdaten & Build-Artefakte ---
+data/hexcrawl.db
+data/hexcrawl.db-*
+data/maps/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.pytest_cache/
+backend/*.egg-info/
+backend/.venv/
+frontend/node_modules/
+frontend/dist/
+backend/app/static/

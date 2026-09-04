@@ -1,0 +1,20 @@
+# Standalone dev/test compose for THIS repo in isolation. How the parent project
+# (which consumes hexcrawl as a git submodule) wires this container into its own
+# compose setup -- network name, volume convention, reverse proxy -- is out of scope
+# here and needs to be resolved against that project directly.
+services:
+  hexcrawl:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      HEXCRAWL_DATA_DIR: /data
+      HEXCRAWL_ADMIN_USERNAME: admin
+      HEXCRAWL_ADMIN_PASSWORD: change-me-on-first-run
+      HEXCRAWL_COOKIE_SECRET: dev-only-change-me
+      HEXCRAWL_COOKIE_SECURE: "false" # set "true" once served over HTTPS
+    volumes:
+      # Bind mount (not a named volume): keeps hexcrawl.db directly inspectable/
+      # backup-able on the host without docker cp. Gitignored, survives rebuilds.
+      - ./data:/data
+    restart: unless-stopped

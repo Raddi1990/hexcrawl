@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ported 1:1 from the old app's assets/css/style.css dark palette, re-expressed as
+   HSL triplets for shadcn/ui's CSS-variable theming (hsl(var(--token))). */
+:root {
+  color-scheme: dark;
+
+  --background: 217 17% 9%; /* was --bg: #14171c */
+  --foreground: 0 0% 91%; /* was --text: #e8e8e8 */
+
+  --card: 217 18% 14%; /* was --panel: #1e232b */
+  --card-foreground: 0 0% 91%;
+
+  --popover: 217 18% 14%;
+  --popover-foreground: 0 0% 91%;
+
+  --primary: 220 82% 65%; /* was --accent: #5b8def */
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 217 15% 24%; /* was --border: #333a45 */
+  --secondary-foreground: 0 0% 91%;
+
+  --muted: 217 15% 24%;
+  --muted-foreground: 214 12% 65%; /* was --muted: #9aa3af */
+
+  --accent: 220 82% 65%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 217 15% 24%;
+  --input: 217 15% 24%;
+  --ring: 220 82% 65%;
+
+  --radius: 0.5rem;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}

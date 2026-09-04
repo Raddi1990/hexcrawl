@@ -2,8 +2,31 @@
 
 Webbasiertes Hex-Kartentool für Pen & Paper: Basiskarte + Nebel des Krieges, Spielfigur
 per Drag & Drop, aufgedeckter Bereich wird serverseitig gespeichert. Mehrere Karten
-verwaltbar über einen kleinen Admin-Bereich. Kein Build-Schritt – die Dateien können
-1:1 per FTP/Datei-Manager auf einen Webspace mit PHP (z.B. one.com) hochgeladen werden.
+verwaltbar über einen kleinen Admin-Bereich.
+
+## Rework in Arbeit: Docker (FastAPI + React)
+
+Dieses Repo wird gerade von der ursprünglichen PHP/one.com-Variante (unten
+dokumentiert, bleibt vorerst als Referenz erhalten) auf einen Docker-Container mit
+FastAPI-Backend (SQLite, WebSocket-Live-Sync) und React-Frontend umgebaut.
+
+```
+docker compose up --build
+```
+
+startet den neuen Stack unter `http://localhost:8000` (siehe `docker-compose.yml`
+für Umgebungsvariablen wie Admin-Zugangsdaten). Für Frontend-Entwicklung mit
+Hot-Reload zusätzlich `npm install && npm run dev` in `frontend/` starten (proxied
+API/WS-Aufrufe automatisch zu Port 8000, siehe `frontend/vite.config.ts`). Backend-
+Tests: `pip install -e ".[dev]"` und `pytest` in `backend/`.
+
+Der alte PHP-Code unten bleibt bis zum Abschluss des Reworks unverändert als
+Verhaltensreferenz stehen und ist nicht mehr der empfohlene Deployment-Weg.
+
+---
+
+Kein Build-Schritt (nur für die PHP-Variante unten) – die Dateien können 1:1 per
+FTP/Datei-Manager auf einen Webspace mit PHP (z.B. one.com) hochgeladen werden.
 
 ## Voraussetzungen auf dem Webspace
 
