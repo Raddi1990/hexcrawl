@@ -7,7 +7,7 @@ from app import state_service
 from app.db import get_session
 from app.models import Map
 from app.schemas import HexListIn, MapStateOut, TokenMoveIn, VisibilityIn
-from app.security import require_admin, require_any_user, require_csrf_header
+from app.security import require_admin, require_viewer, require_csrf_header
 from app.ws_manager import manager
 
 router = APIRouter(prefix="/api/maps/{map_id}", tags=["state"])
@@ -20,7 +20,7 @@ def _get_map_or_404(session: Session, map_id: str) -> Map:
     return map_row
 
 
-@router.get("/state", response_model=MapStateOut, dependencies=[Depends(require_any_user)])
+@router.get("/state", response_model=MapStateOut, dependencies=[Depends(require_viewer)])
 def load_state(map_id: str, session: Session = Depends(get_session)) -> MapStateOut:
     _get_map_or_404(session, map_id)
     snapshot = state_service.get_snapshot(session, map_id)

@@ -12,7 +12,7 @@ from app.db import get_session
 from app.images import InvalidImageError, save_uploaded_image
 from app.models import Map, MapState, RevealedHex
 from app.schemas import MapOut
-from app.security import require_admin, require_any_user, require_csrf_header
+from app.security import require_admin, require_viewer, require_csrf_header
 from app.slugs import is_valid_map_id, slugify, unique_map_id
 
 router = APIRouter(tags=["maps"])
@@ -44,13 +44,13 @@ def _map_to_out(session: Session, map_row: Map) -> MapOut:
     )
 
 
-@router.get("/api/maps", response_model=list[MapOut], dependencies=[Depends(require_any_user)])
+@router.get("/api/maps", response_model=list[MapOut], dependencies=[Depends(require_viewer)])
 def list_maps(session: Session = Depends(get_session)) -> list[MapOut]:
     maps = session.scalars(select(Map).order_by(Map.created_at)).all()
     return [_map_to_out(session, m) for m in maps]
 
 
-@router.get("/api/maps/{map_id}", response_model=MapOut, dependencies=[Depends(require_any_user)])
+@router.get("/api/maps/{map_id}", response_model=MapOut, dependencies=[Depends(require_viewer)])
 def get_map(map_id: str, session: Session = Depends(get_session)) -> MapOut:
     map_row = session.get(Map, map_id)
     if map_row is None:
@@ -211,7 +211,7 @@ def delete_map(map_id: str, session: Session = Depends(get_session)) -> None:
     shutil.rmtree(settings.resolved_maps_dir / map_id, ignore_errors=True)
 
 
-@router.get("/maps/{map_id}/{filename}", dependencies=[Depends(require_any_user)])
+@router.get("/maps/{map_id}/{filename}", dependencies=[Depends(require_viewer)])
 def serve_map_image(map_id: str, filename: str) -> FileResponse:
     if not is_valid_map_id(map_id) or filename not in _ALLOWED_IMAGE_FILENAMES:
         raise HTTPException(status_code=404, detail="not found")

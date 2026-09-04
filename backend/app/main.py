@@ -64,6 +64,13 @@ def health() -> dict:
     return {"ok": True}
 
 
+@app.get("/api/config")
+def public_config() -> dict:
+    """Public, unauthenticated -- the frontend needs this before it knows whether
+    it's even allowed to ask who's logged in."""
+    return {"require_login": get_settings().require_login}
+
+
 # The frontend build (see ../frontend, copied here by the root Dockerfile) is served
 # as a single-page app: any path that isn't a known static asset falls back to
 # index.html so client-side routing (React Router) can take over.

@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     cookie_secure: bool = False
     session_max_age_seconds: int = 60 * 60 * 24 * 7  # 7 days
 
+    # Off by default: the map viewer stays open to anyone with the link, matching the
+    # original behavior. Set to true only when accounts are actually being managed
+    # (e.g. via the optional external useradmin tool) -- otherwise turning this on
+    # would lock everyone out with no way to create accounts.
+    require_login: bool = False
+
     max_image_dimension: int = 4096
 
     # Comma-separated list of allowed origins for cross-origin requests, e.g. the Vite

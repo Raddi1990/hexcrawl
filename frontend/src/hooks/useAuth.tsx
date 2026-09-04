@@ -6,6 +6,7 @@ export type UserRole = "admin" | "player";
 interface AuthState {
   username: string | null;
   role: UserRole | null;
+  requireLogin: boolean;
   loading: boolean;
 }
 
@@ -17,24 +18,36 @@ interface AuthContextValue extends AuthState {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AuthState>({ username: null, role: null, loading: true });
+  const [state, setState] = useState<AuthState>({
+    username: null,
+    role: null,
+    requireLogin: false,
+    loading: true,
+  });
 
   useEffect(() => {
-    api
-      .get<{ username: string; role: UserRole }>("/api/auth/me")
-      .then((me) => setState({ username: me.username, role: me.role, loading: false }))
-      .catch(() => setState({ username: null, role: null, loading: false }));
+    Promise.all([
+      api.get<{ require_login: boolean }>("/api/config"),
+      api.get<{ username: string; role: UserRole }>("/api/auth/me").catch(() => null),
+    ]).then(([config, me]) => {
+      setState({
+        username: me?.username ?? null,
+        role: me?.role ?? null,
+        requireLogin: config.require_login,
+        loading: false,
+      });
+    });
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
     const me = await api.post<{ username: string; role: UserRole }>("/api/auth/login", { username, password });
-    setState({ username: me.username, role: me.role, loading: false });
+    setState((prev) => ({ ...prev, username: me.username, role: me.role, loading: false }));
     return me.role;
   }, []);
 
   const logout = useCallback(async () => {
     await api.post("/api/auth/logout");
-    setState({ username: null, role: null, loading: false });
+    setState((prev) => ({ ...prev, username: null, role: null, loading: false }));
   }, []);
 
   return <AuthContext.Provider value={{ ...state, login, logout }}>{children}</AuthContext.Provider>;

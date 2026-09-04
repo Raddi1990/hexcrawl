@@ -12,6 +12,10 @@ os.environ["HEXCRAWL_DATA_DIR"] = str(_tmp_dir)
 os.environ["HEXCRAWL_COOKIE_SECRET"] = "test-secret"
 os.environ["HEXCRAWL_ADMIN_USERNAME"] = "admin"
 os.environ["HEXCRAWL_ADMIN_PASSWORD"] = "test-password-123"
+# Matches production (the deployed server sets this explicitly): most tests exercise
+# the login-gated behavior. test_config_endpoint.py flips it off for individual tests
+# to cover the (default-off) open-access fallback.
+os.environ["HEXCRAWL_REQUIRE_LOGIN"] = "true"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -60,6 +64,18 @@ def player_client(admin_client: TestClient) -> TestClient:
         assert response.status_code == 200, response.text
         player_client.headers.update({"X-Hexcrawl-Client": "1"})
         yield player_client
+
+
+@pytest.fixture()
+def require_login_disabled(monkeypatch: pytest.MonkeyPatch):
+    """Flips HEXCRAWL_REQUIRE_LOGIN off for a single test, bypassing get_settings()'s
+    @lru_cache so the change actually takes effect."""
+    from app.config import get_settings
+
+    monkeypatch.setenv("HEXCRAWL_REQUIRE_LOGIN", "false")
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 @pytest.fixture()

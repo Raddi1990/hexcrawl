@@ -83,6 +83,19 @@ def require_any_user(
     return user
 
 
+def require_viewer(
+    user: Annotated[User | None, Depends(get_current_user)],
+) -> User | None:
+    """Gates the map viewer/read endpoints. Only enforces a login when
+    `HEXCRAWL_REQUIRE_LOGIN=true` -- with the flag off (the default), anonymous
+    visitors pass through unchanged, matching the tool's original open-by-default
+    behavior. Returns the user if there is one either way (never errors just because
+    someone happens to be logged in)."""
+    if get_settings().require_login and user is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
+    return user
+
+
 def require_admin(
     user: Annotated[User, Depends(require_any_user)],
 ) -> User:

@@ -8,11 +8,11 @@ import { AdminMapListPage } from "@/routes/admin/AdminMapListPage";
 import { AdminCalibratePage } from "@/routes/admin/AdminCalibratePage";
 
 function RequireAnyUser({ children }: { children: ReactNode }) {
-  const { username, loading } = useAuth();
+  const { username, requireLogin, loading } = useAuth();
   if (loading) {
     return <div className="flex h-screen items-center justify-center text-muted-foreground">Lade…</div>;
   }
-  if (!username) return <Navigate to="/login" replace />;
+  if (requireLogin && !username) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 

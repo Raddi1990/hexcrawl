@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app import state_service
+from app.config import get_settings
 from app.db import SessionLocal
 from app.models import Map
 from app.security import SESSION_COOKIE_NAME, session_role
@@ -14,7 +15,7 @@ router = APIRouter()
 @router.websocket("/ws/maps/{map_id}")
 async def map_socket(websocket: WebSocket, map_id: str) -> None:
     role = session_role(websocket.cookies.get(SESSION_COOKIE_NAME))
-    if role is None:
+    if role is None and get_settings().require_login:
         await websocket.close(code=4401)
         return
     is_admin = role == "admin"

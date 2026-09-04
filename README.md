@@ -20,6 +20,17 @@ Hot-Reload zusätzlich `npm install && npm run dev` in `frontend/` starten (prox
 API/WS-Aufrufe automatisch zu Port 8000, siehe `frontend/vite.config.ts`). Backend-
 Tests: `pip install -e ".[dev]"` und `pytest` in `backend/`.
 
+### Nutzer-Login (optional)
+
+Standardmäßig (`HEXCRAWL_REQUIRE_LOGIN` ungesetzt bzw. `false`) bleibt die
+Kartenansicht frei zugänglich wie in der ursprünglichen Version — kein Login nötig,
+jeder mit dem Link kann zuschauen. Wird `HEXCRAWL_REQUIRE_LOGIN=true` gesetzt,
+verlangt die Kartenansicht einen Login (Admin- oder Spieler-Account über
+`/api/users`, z.B. mit einem externen Verwaltungs-Tool wie
+[Server/useradmin](https://github.com/Raddi1990/server) angelegt). Ohne ein Tool/
+einen Weg, Accounts anzulegen, sollte diese Variable **nicht** aktiviert werden,
+sonst kommt niemand mehr rein.
+
 Der alte PHP-Code unten bleibt bis zum Abschluss des Reworks unverändert als
 Verhaltensreferenz stehen und ist nicht mehr der empfohlene Deployment-Weg.
 
