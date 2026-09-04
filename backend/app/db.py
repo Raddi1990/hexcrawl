@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Generator
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import get_settings
@@ -44,10 +44,24 @@ def _upgrade_0001_initial(session: Session) -> None:
     Base.metadata.create_all(bind=session.get_bind())
 
 
+def _upgrade_0002_add_user_roles(session: Session) -> None:
+    bind = session.get_bind()
+    existing_tables = inspect(bind).get_table_names()
+    if "admin_users" in existing_tables and "users" not in existing_tables:
+        session.execute(text("ALTER TABLE admin_users RENAME TO users"))
+    # Safe to run against a fresh DB too: Base.metadata.create_all() (0001) already
+    # created "users" with the "role" column via the current model definition, so
+    # this ALTER only ever fires for a pre-existing "admin_users" table without it.
+    columns = {col["name"] for col in inspect(bind).get_columns("users")}
+    if "role" not in columns:
+        session.execute(text("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'admin'"))
+
+
 # Ordered, idempotent schema upgrades. Each entry must be safe to run against a
 # database already at or past its own version (in practice: create-if-missing only).
 MIGRATIONS: list[tuple[int, str, Callable[[Session], None]]] = [
     (1, "0001_initial", _upgrade_0001_initial),
+    (2, "0002_add_user_roles", _upgrade_0002_add_user_roles),
 ]
 
 

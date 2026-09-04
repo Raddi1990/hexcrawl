@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db import get_session
-from app.models import AdminUser
+from app.models import User
 
 SESSION_COOKIE_NAME = "hexcrawl_session"
 CSRF_HEADER_NAME = "x-hexcrawl-client"
@@ -30,9 +30,9 @@ def _serializer() -> URLSafeTimedSerializer:
     return URLSafeTimedSerializer(settings.cookie_secret, salt="hexcrawl-session")
 
 
-def create_session_cookie(response: Response, admin_id: int) -> None:
+def create_session_cookie(response: Response, user_id: int, role: str) -> None:
     settings = get_settings()
-    token = _serializer().dumps({"admin_id": admin_id})
+    token = _serializer().dumps({"user_id": user_id, "role": role})
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
         value=token,
@@ -48,7 +48,8 @@ def clear_session_cookie(response: Response) -> None:
     response.delete_cookie(key=SESSION_COOKIE_NAME, path="/")
 
 
-def read_session_admin_id(token: str | None) -> int | None:
+def read_session_user(token: str | None) -> tuple[int, str] | None:
+    """Returns (user_id, role) from a signed session token, or None if absent/invalid."""
     if not token:
         return None
     settings = get_settings()
@@ -56,26 +57,38 @@ def read_session_admin_id(token: str | None) -> int | None:
         data = _serializer().loads(token, max_age=settings.session_max_age_seconds)
     except (BadSignature, SignatureExpired):
         return None
-    admin_id = data.get("admin_id")
-    return int(admin_id) if isinstance(admin_id, int) else None
+    user_id = data.get("user_id")
+    role = data.get("role")
+    if not isinstance(user_id, int) or not isinstance(role, str):
+        return None
+    return user_id, role
 
 
-def get_current_admin(
+def get_current_user(
     session: Annotated[Session, Depends(get_session)],
     hexcrawl_session: Annotated[str | None, Cookie()] = None,
-) -> AdminUser | None:
-    admin_id = read_session_admin_id(hexcrawl_session)
-    if admin_id is None:
+) -> User | None:
+    parsed = read_session_user(hexcrawl_session)
+    if parsed is None:
         return None
-    return session.get(AdminUser, admin_id)
+    user_id, _role = parsed
+    return session.get(User, user_id)
+
+
+def require_any_user(
+    user: Annotated[User | None, Depends(get_current_user)],
+) -> User:
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
+    return user
 
 
 def require_admin(
-    admin: Annotated[AdminUser | None, Depends(get_current_admin)],
-) -> AdminUser:
-    if admin is None:
+    user: Annotated[User, Depends(require_any_user)],
+) -> User:
+    if user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
-    return admin
+    return user
 
 
 def require_csrf_header(
@@ -85,6 +98,7 @@ def require_csrf_header(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="missing csrf header")
 
 
-def is_admin_session_token(token: str | None) -> bool:
+def session_role(token: str | None) -> str | None:
     """Used by the WebSocket handshake, which reads the cookie manually rather than via Depends()."""
-    return read_session_admin_id(token) is not None
+    parsed = read_session_user(token)
+    return parsed[1] if parsed is not None else None

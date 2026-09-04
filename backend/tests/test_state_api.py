@@ -29,6 +29,13 @@ def test_state_mutations_require_admin(client, admin_client, tiny_png):
     assert response.status_code == 403
 
 
+def test_state_mutations_reject_player_role(player_client, admin_client, tiny_png):
+    created = _create_map(admin_client, "Spielerrechtekarte", tiny_png)
+
+    response = player_client.post(f"/api/maps/{created['id']}/reveal", json={"hexes": [[0, 0]]})
+    assert response.status_code == 403
+
+
 def test_token_move_reveals_sight_radius(admin_client, tiny_png):
     created = _create_map(admin_client, "Sichtradiuskarte", tiny_png)
     admin_client.patch(f"/api/maps/{created['id']}", data={"sight_radius": "1"})

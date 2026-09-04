@@ -53,6 +53,21 @@ class ChangePasswordIn(BaseModel):
 
 class MeOut(BaseModel):
     username: str
+    role: str
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
+    role: str
+
+
+class UserCreateIn(BaseModel):
+    username: str
+    password: str = Field(min_length=8)
+    role: str = Field(pattern="^(admin|player)$")
 
 
 # --- WebSocket message payloads (server -> client) ---

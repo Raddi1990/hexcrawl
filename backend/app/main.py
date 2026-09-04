@@ -11,8 +11,8 @@ from sqlalchemy import select
 
 from app.config import get_settings
 from app.db import SessionLocal, run_migrations
-from app.models import AdminUser
-from app.routers import auth, maps, state, ws
+from app.models import User
+from app.routers import auth, maps, state, users, ws
 from app.security import hash_password
 
 
@@ -21,10 +21,14 @@ def _bootstrap_admin() -> None:
     if not settings.admin_username or not settings.admin_password:
         return
     with SessionLocal() as session:
-        if session.scalar(select(AdminUser.id).limit(1)) is not None:
+        if session.scalar(select(User.id).limit(1)) is not None:
             return
         session.add(
-            AdminUser(username=settings.admin_username, password_hash=hash_password(settings.admin_password))
+            User(
+                username=settings.admin_username,
+                password_hash=hash_password(settings.admin_password),
+                role="admin",
+            )
         )
         session.commit()
 
@@ -51,6 +55,7 @@ if _settings.cors_allow_origins_list:
 app.include_router(auth.router)
 app.include_router(maps.router)
 app.include_router(state.router)
+app.include_router(users.router)
 app.include_router(ws.router)
 
 

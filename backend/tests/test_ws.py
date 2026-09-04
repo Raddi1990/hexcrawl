@@ -20,7 +20,7 @@ def test_ws_sends_snapshot_on_connect(admin_client, tiny_png):
         assert snapshot["revealed_hexes"] == []
 
 
-def test_ws_unknown_map_closes_connection(client):
+def test_ws_anonymous_connection_is_rejected(client):
     import pytest
     from starlette.websockets import WebSocketDisconnect
 
@@ -29,12 +29,21 @@ def test_ws_unknown_map_closes_connection(client):
             pass
 
 
-def test_ws_admin_mutation_broadcasts_to_player(admin_client, client, tiny_png):
+def test_ws_unknown_map_closes_connection(player_client):
+    import pytest
+    from starlette.websockets import WebSocketDisconnect
+
+    with pytest.raises(WebSocketDisconnect):
+        with player_client.websocket_connect("/ws/maps/does-not-exist"):
+            pass
+
+
+def test_ws_admin_mutation_broadcasts_to_player(admin_client, player_client, tiny_png):
     created = _create_map(admin_client, "Broadcastkarte", tiny_png)
     map_id = created["id"]
 
     with admin_client.websocket_connect(f"/ws/maps/{map_id}") as admin_ws:
-        with client.websocket_connect(f"/ws/maps/{map_id}") as player_ws:
+        with player_client.websocket_connect(f"/ws/maps/{map_id}") as player_ws:
             admin_ws.receive_json()  # initial snapshot
             player_ws.receive_json()  # initial snapshot
 
@@ -46,12 +55,12 @@ def test_ws_admin_mutation_broadcasts_to_player(admin_client, client, tiny_png):
             assert player_delta == admin_delta
 
 
-def test_ws_player_writes_are_silently_ignored(admin_client, client, tiny_png):
+def test_ws_player_writes_are_silently_ignored(admin_client, player_client, tiny_png):
     created = _create_map(admin_client, "Spielerkarte", tiny_png)
     map_id = created["id"]
 
     with admin_client.websocket_connect(f"/ws/maps/{map_id}") as admin_ws:
-        with client.websocket_connect(f"/ws/maps/{map_id}") as player_ws:
+        with player_client.websocket_connect(f"/ws/maps/{map_id}") as player_ws:
             admin_ws.receive_json()
             player_ws.receive_json()
 

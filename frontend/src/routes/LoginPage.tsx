@@ -20,8 +20,8 @@ export function LoginPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await login(username, password);
-      navigate("/admin");
+      const role = await login(username, password);
+      navigate(role === "admin" ? "/admin" : "/");
     } catch (err) {
       setError(err instanceof ApiError && err.status === 401 ? "Benutzername oder Passwort falsch." : "Anmeldung fehlgeschlagen.");
     } finally {
@@ -33,7 +33,7 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center">
       <Card className="w-80">
         <CardHeader>
-          <CardTitle>Hexcrawl Admin-Login</CardTitle>
+          <CardTitle>Hexcrawl-Login</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">

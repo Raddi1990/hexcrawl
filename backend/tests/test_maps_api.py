@@ -12,8 +12,13 @@ def _create_map(admin_client, name, tiny_png, **form_overrides):
     return response.json()
 
 
-def test_list_maps_returns_a_list(client):
+def test_list_maps_requires_login(client):
     response = client.get("/api/maps")
+    assert response.status_code == 403
+
+
+def test_list_maps_returns_a_list(player_client):
+    response = player_client.get("/api/maps")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
@@ -98,8 +103,8 @@ def test_delete_map_removes_it(admin_client, tiny_png):
     assert admin_client.get(f"/api/maps/{created['id']}").status_code == 404
 
 
-def test_serve_map_image_rejects_invalid_map_id(client):
-    response = client.get("/maps/NOT_VALID/base.png")
+def test_serve_map_image_rejects_invalid_map_id(player_client):
+    response = player_client.get("/maps/NOT_VALID/base.png")
     assert response.status_code == 404
 
 

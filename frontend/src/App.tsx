@@ -7,7 +7,7 @@ import { LoginPage } from "@/routes/LoginPage";
 import { AdminMapListPage } from "@/routes/admin/AdminMapListPage";
 import { AdminCalibratePage } from "@/routes/admin/AdminCalibratePage";
 
-function RequireAdmin({ children }: { children: ReactNode }) {
+function RequireAnyUser({ children }: { children: ReactNode }) {
   const { username, loading } = useAuth();
   if (loading) {
     return <div className="flex h-screen items-center justify-center text-muted-foreground">Lade…</div>;
@@ -16,10 +16,27 @@ function RequireAdmin({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function RequireAdmin({ children }: { children: ReactNode }) {
+  const { username, role, loading } = useAuth();
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center text-muted-foreground">Lade…</div>;
+  }
+  if (!username) return <Navigate to="/login" replace />;
+  if (role !== "admin") return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<ViewerPage />} />
+      <Route
+        path="/"
+        element={
+          <RequireAnyUser>
+            <ViewerPage />
+          </RequireAnyUser>
+        }
+      />
       <Route path="/login" element={<LoginPage />} />
       <Route
         path="/admin"

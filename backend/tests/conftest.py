@@ -40,6 +40,28 @@ def admin_client(client: TestClient) -> TestClient:
     return client
 
 
+PLAYER_USERNAME = "test-player"
+PLAYER_PASSWORD = "test-player-pw"
+
+
+@pytest.fixture()
+def player_client(admin_client: TestClient) -> TestClient:
+    """A second, independently-authenticated TestClient logged in as a non-admin player.
+
+    Deliberately a fresh TestClient (not the shared `client`/`admin_client` instance) so its
+    session cookie can't accidentally end up carrying admin auth."""
+    created = admin_client.post(
+        "/api/users", json={"username": PLAYER_USERNAME, "password": PLAYER_PASSWORD, "role": "player"}
+    )
+    assert created.status_code in (201, 409), created.text  # 409: already created by an earlier test
+
+    with TestClient(app) as player_client:
+        response = player_client.post("/api/auth/login", json={"username": PLAYER_USERNAME, "password": PLAYER_PASSWORD})
+        assert response.status_code == 200, response.text
+        player_client.headers.update({"X-Hexcrawl-Client": "1"})
+        yield player_client
+
+
 @pytest.fixture()
 def tiny_png() -> bytes:
     buf = io.BytesIO()

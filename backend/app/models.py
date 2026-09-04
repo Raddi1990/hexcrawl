@@ -23,16 +23,19 @@ class Base(DeclarativeBase):
     pass
 
 
-class AdminUser(Base):
-    __tablename__ = "admin_users"
+class User(Base):
+    __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
+    role: Mapped[str] = mapped_column(String, nullable=False, default="admin")
     created_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     updated_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
     )
+
+    __table_args__ = (CheckConstraint("role IN ('admin','player')", name="ck_users_role"),)
 
 
 class Map(Base):

@@ -13,8 +13,8 @@ import { Button } from "@/components/ui/button";
 const FOG_OPACITY_STORAGE_KEY = "hexcrawl_fogOpacity";
 
 export function ViewerPage() {
-  const { username } = useAuth();
-  const isAdmin = username !== null;
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
 
   const [maps, setMaps] = useState<MapSummary[] | null>(null);
   const [currentMapId, setCurrentMapId] = useState<string | null>(null);
@@ -47,9 +47,6 @@ export function ViewerPage() {
     paint.clearUndoStack();
   }
 
-  const adminLink = isAdmin ? "/admin" : "/login";
-  const adminLinkLabel = isAdmin ? "Admin" : "Anmelden";
-
   if (maps === null) {
     return <div className="flex h-screen items-center justify-center text-muted-foreground">Lade…</div>;
   }
@@ -58,9 +55,11 @@ export function ViewerPage() {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
         <p className="text-muted-foreground">Keine Karten vorhanden.</p>
-        <Button asChild>
-          <Link to={adminLink}>{isAdmin ? "Zum Admin-Bereich" : "Als Admin anmelden"}</Link>
-        </Button>
+        {isAdmin && (
+          <Button asChild>
+            <Link to="/admin">Zum Admin-Bereich</Link>
+          </Button>
+        )}
       </div>
     );
   }
@@ -111,9 +110,11 @@ export function ViewerPage() {
         />
       </div>
 
-      <Button asChild variant="secondary" size="sm" className="no-pan absolute left-3 top-3">
-        <Link to={adminLink}>{adminLinkLabel}</Link>
-      </Button>
+      {isAdmin && (
+        <Button asChild variant="secondary" size="sm" className="no-pan absolute left-3 top-3">
+          <Link to="/admin">Admin</Link>
+        </Button>
+      )}
     </div>
   );
 }
