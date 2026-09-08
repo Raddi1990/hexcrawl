@@ -18,3 +18,9 @@ backend/.venv/
 frontend/node_modules/
 frontend/dist/
 backend/app/static/
+
+# tsc -b build cache + the vite.config.ts type-check project's emitted output
+# (tsconfig.node.json has no noEmit -- harmless, just needs to stay untracked)
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
