@@ -87,7 +87,7 @@ def require_viewer(
     user: Annotated[User | None, Depends(get_current_user)],
 ) -> User | None:
     """Gates the map viewer/read endpoints. Only enforces a login when
-    `HEXCRAWL_REQUIRE_LOGIN=true` -- with the flag off (the default), anonymous
+    `HEXCRAWL_USER_MANAGEMENT_URL` is set -- with it empty (the default), anonymous
     visitors pass through unchanged, matching the tool's original open-by-default
     behavior. Returns the user if there is one either way (never errors just because
     someone happens to be logged in)."""
