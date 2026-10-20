@@ -3,9 +3,23 @@
 Webbasiertes Hex-Kartentool für Pen & Paper: Basiskarte + Nebel des Krieges,
 Spielfigur per Drag & Drop, aufgedeckter Bereich wird serverseitig gespeichert und
 per WebSocket live synchronisiert. Mehrere Karten über einen Admin-Bereich
-verwaltbar. Eigenständiges Repo, wird im [Server](https://github.com/Raddi1990/server)-Repo
-als Git-Submodule eingebunden und dort deployed (eigene Working-Copy hier, siehe
-`Server/CLAUDE.md` zum Deploy-Ablauf).
+verwaltbar. Eigenständiges Repo; das [Server](https://github.com/Raddi1990/server)-Repo
+betreibt es als fertiges Image.
+
+## CI & Deploy
+
+- `.github/workflows/ci.yml` — bei jedem Push/PR: pytest, `npm run build`,
+  Docker-Build. Auf `main` danach Push nach `ghcr.io/raddi1990/hexcrawl:<sha>`
+  (+ `:main`). `npm run lint` ist bewusst nicht drin, die ESLint-Config kennt
+  noch keine Browser-Globals (~90 `no-undef`-Fehlalarme).
+- `.github/workflows/deploy.yml` — nur manuell (Actions → Deploy → "Run
+  workflow"), optional mit älterer SHA als Rollback. Ruft per SSH
+  `deploy/deploy.sh hexcrawl <sha>` im Server-Repo auf; Backup, Health-Check und
+  automatisches Zurückrollen passieren dort, siehe `Server/CLAUDE.md`.
+- Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_KNOWN_HOSTS`.
+- Neue `HEXCRAWL_*`-Env-Variablen müssen zusätzlich in
+  `Server/docker-compose.yml` + `.env.example` eingetragen und auf dem Server
+  gepullt sein, **bevor** die neue Version deployt wird.
 
 **Aktiver Stack: FastAPI + React (Docker, `backend`/`frontend`).** Der alte
 PHP/one.com-Code im Repo-Root (`index.php`, `admin/`, `api/*.php`, `assets/`,
