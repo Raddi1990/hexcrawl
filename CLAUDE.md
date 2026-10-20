@@ -64,12 +64,6 @@ py -3.12 -m venv .venv                          # einmalig, falls .venv fehlt
 **Docker fehlt weiterhin lokal** (bewusste Entscheidung, siehe
 [[local-dev-environment-decisions]] in Memory) — volle Stack-/Container-Tests
 laufen wie bisher erst nach Deploy auf dem echten Server.
-
-> Bekannter, noch offener Befund (nicht Teil des heutigen Environment-Setups):
-> `test_state_mutations_require_admin` und zwei Tests in `test_users_api.py`
-> schlagen aktuell fehl — Endpunkte liefern 200 statt der erwarteten 403 für
-> nicht-admin Requests. Noch nicht untersucht, ob Test- oder Anwendungsfehler.
-
 ## Konventionen
 
 - Migrationen in `db.py`: analog zum DungeonMasterTool-Schwesterprojekt eine
@@ -77,3 +71,6 @@ laufen wie bisher erst nach Deploy auf dem echten Server.
   FastAPI-`lifespan` bei jedem Start.
 - `frontend/src/lib/api.ts` kapselt alle Backend-Aufrufe — Seiten rufen nie direkt
   `fetch` auf.
+- Test-Fixtures (`tests/conftest.py`): `client` ist anonym, `admin_client` und
+  `player_client` sind jeweils eigene `TestClient`-Instanzen. Nie auf `client`
+  einloggen, sonst ist er in Tests, die mehrere Fixtures nutzen, nicht mehr anonym.
