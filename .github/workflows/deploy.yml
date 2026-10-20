@@ -1,0 +1,65 @@
+# Manueller Deploy auf rathgeber.me: Actions -> Deploy -> "Run workflow".
+# Rollt ein von ci.yml gebautes Image aus. Ohne Eingabe den aktuellen Stand des
+# gewählten Branches, mit Eingabe einen älteren Commit (= Rollback).
+# Auf dem Server läuft deploy/deploy.sh aus dem Server-Repo (Backup, Pull,
+# Neustart, Health-Check, bei Fehler automatisches Zurückrollen).
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "Commit-SHA (40 Zeichen) für Rollback, leer = aktueller Stand"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve image tag
+        env:
+          INPUT_SHA: ${{ inputs.sha }}
+          REF_SHA: ${{ github.sha }}
+        run: |
+          sha="${INPUT_SHA:-$REF_SHA}"
+          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Ungültige SHA '$sha' -- bitte den vollen 40-stelligen Commit-Hash angeben"
+            exit 1
+          fi
+          echo "SHA=$sha" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check that CI has published the image
+        run: |
+          if ! docker manifest inspect "ghcr.io/raddi1990/hexcrawl:$SHA" > /dev/null; then
+            echo "::error::Kein Image für $SHA -- ist der CI-Lauf für diesen Commit schon grün durch?"
+            exit 1
+          fi
+
+      - name: Deploy via SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # Der Key ist serverseitig per command="..." auf deploy.sh festgenagelt;
+          # "hexcrawl <sha>" kommt dort als $SSH_ORIGINAL_COMMAND an.
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "root@$HOST" "hexcrawl $SHA"
