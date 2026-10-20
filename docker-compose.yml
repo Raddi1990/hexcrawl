@@ -1,6 +1,6 @@
-# Standalone dev/test compose for THIS repo in isolation. How the parent project
-# (which consumes hexcrawl as a git submodule) wires this container into its own
-# compose setup -- network name, volume convention, reverse proxy -- is out of scope
+# Standalone dev/test compose for THIS repo in isolation. Production runs the
+# prebuilt CI image (ghcr.io/raddi1990/hexcrawl) from the server repo's own compose
+# setup -- network name, volume convention, reverse proxy -- which is out of scope
 # here and needs to be resolved against that project directly.
 services:
   hexcrawl:

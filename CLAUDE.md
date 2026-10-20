@@ -8,10 +8,9 @@ betreibt es als fertiges Image.
 
 ## CI & Deploy
 
-- `.github/workflows/ci.yml` — bei jedem Push/PR: pytest, `npm run build`,
-  Docker-Build. Auf `main` danach Push nach `ghcr.io/raddi1990/hexcrawl:<sha>`
-  (+ `:main`). `npm run lint` ist bewusst nicht drin, die ESLint-Config kennt
-  noch keine Browser-Globals (~90 `no-undef`-Fehlalarme).
+- `.github/workflows/ci.yml` — bei jedem Push/PR: pytest, `npm run lint`,
+  `npm run build`, Docker-Build. Auf `main` danach Push nach
+  `ghcr.io/raddi1990/hexcrawl:<sha>` (+ `:main`).
 - `.github/workflows/deploy.yml` — nur manuell (Actions → Deploy → "Run
   workflow"), optional mit älterer SHA als Rollback. Ruft per SSH
   `deploy/deploy.sh hexcrawl <sha>` im Server-Repo auf; Backup, Health-Check und
@@ -51,10 +50,6 @@ also offen, solange `HEXCRAWL_USER_MANAGEMENT_URL` leer ist (Default), und verla
 Login, sobald sie gesetzt ist (zeigt dann zusätzlich im Admin-Bereich einen Link
 darauf). Accounts (Rolle `admin`/`player`) werden über `/api/users` angelegt, z.B.
 vom Schwester-Tool `useradmin` im Server-Repo — nicht hier im Repo.
-
-> Hinweis: Das README hier erwähnt an einer Stelle noch den alten Namen
-> `HEXCRAWL_REQUIRE_LOGIN` — der tatsächliche Code (`config.py`) nutzt
-> `HEXCRAWL_USER_MANAGEMENT_URL`. Bei Widerspruch gilt der Code.
 
 ## Dev-Commands
 

@@ -22,14 +22,14 @@ Tests: `pip install -e ".[dev]"` und `pytest` in `backend/`.
 
 ### Nutzer-Login (optional)
 
-Standardmäßig (`HEXCRAWL_REQUIRE_LOGIN` ungesetzt bzw. `false`) bleibt die
+Standardmäßig (`HEXCRAWL_USER_MANAGEMENT_URL` ungesetzt bzw. leer) bleibt die
 Kartenansicht frei zugänglich wie in der ursprünglichen Version — kein Login nötig,
-jeder mit dem Link kann zuschauen. Wird `HEXCRAWL_REQUIRE_LOGIN=true` gesetzt,
+jeder mit dem Link kann zuschauen. Wird `HEXCRAWL_USER_MANAGEMENT_URL` auf die URL
+eines Verwaltungs-Tools gesetzt (z.B. [Server/useradmin](https://github.com/Raddi1990/server)),
 verlangt die Kartenansicht einen Login (Admin- oder Spieler-Account über
-`/api/users`, z.B. mit einem externen Verwaltungs-Tool wie
-[Server/useradmin](https://github.com/Raddi1990/server) angelegt). Ohne ein Tool/
-einen Weg, Accounts anzulegen, sollte diese Variable **nicht** aktiviert werden,
-sonst kommt niemand mehr rein.
+`/api/users`) und der Admin-Bereich zeigt einen Link auf dieses Tool. Ohne ein
+Tool/einen Weg, Accounts anzulegen, sollte diese Variable **nicht** gesetzt
+werden, sonst kommt niemand mehr rein.
 
 Der alte PHP-Code unten bleibt bis zum Abschluss des Reworks unverändert als
 Verhaltensreferenz stehen und ist nicht mehr der empfohlene Deployment-Weg.
