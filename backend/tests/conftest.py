@@ -38,11 +38,17 @@ def client():
 
 
 @pytest.fixture()
-def admin_client(client: TestClient) -> TestClient:
-    response = client.post("/api/auth/login", json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD})
-    assert response.status_code == 200, response.text
-    client.headers.update({"X-Hexcrawl-Client": "1"})
-    return client
+def admin_client():
+    """A separate TestClient logged in as admin.
+
+    Deliberately not the `client` instance: logging in on it would put the admin session
+    cookie on `client` too, so tests requesting both would see `client` as admin instead
+    of anonymous."""
+    with TestClient(app) as admin_client:
+        response = admin_client.post("/api/auth/login", json={"username": ADMIN_USERNAME, "password": ADMIN_PASSWORD})
+        assert response.status_code == 200, response.text
+        admin_client.headers.update({"X-Hexcrawl-Client": "1"})
+        yield admin_client
 
 
 PLAYER_USERNAME = "test-player"
@@ -53,8 +59,8 @@ PLAYER_PASSWORD = "test-player-pw"
 def player_client(admin_client: TestClient) -> TestClient:
     """A second, independently-authenticated TestClient logged in as a non-admin player.
 
-    Deliberately a fresh TestClient (not the shared `client`/`admin_client` instance) so its
-    session cookie can't accidentally end up carrying admin auth."""
+    Deliberately a fresh TestClient (not the `admin_client` instance) so its session
+    cookie can't accidentally end up carrying admin auth."""
     created = admin_client.post(
         "/api/users", json={"username": PLAYER_USERNAME, "password": PLAYER_PASSWORD, "role": "player"}
     )
