@@ -1,4 +1,4 @@
-# Python twin of assets/js/hexgrid.js's hexRange, kept in sync deliberately so that
+# Python twin of frontend/src/lib/hexgrid.ts's hexRange, kept in sync deliberately so that
 # server-side sight-radius reveals match the client's axial hex math exactly.
 # See https://www.redblobgames.com/grids/hexagons/ for the underlying formulas.
 

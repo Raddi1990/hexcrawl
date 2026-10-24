@@ -1,12 +1,7 @@
-# Zugangsdaten – lokal aus config.php.example erstellen
+# Zugangsdaten der alten PHP-Variante, falls lokal noch vorhanden
 data/config.php
 
-# Laufzeitdaten (werden zur Laufzeit generiert, nicht Teil des Quellcodes)
-data/maps.json
-data/state/*.json
-maps/*/
-
-# --- Rework (FastAPI + React): Laufzeitdaten & Build-Artefakte ---
+# Laufzeitdaten & Build-Artefakte
 data/hexcrawl.db
 data/hexcrawl.db-*
 data/maps/

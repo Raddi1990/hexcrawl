@@ -1,6 +1,5 @@
 .git
 data/
-maps/
 
 backend/__pycache__/
 backend/**/__pycache__/

@@ -20,10 +20,10 @@ betreibt es als fertiges Image.
   `Server/docker-compose.yml` + `.env.example` eingetragen und auf dem Server
   gepullt sein, **bevor** die neue Version deployt wird.
 
-**Aktiver Stack: FastAPI + React (Docker, `backend`/`frontend`).** Der alte
-PHP/one.com-Code im Repo-Root (`index.php`, `admin/`, `api/*.php`, `assets/`,
-`data/`, `maps/`) ist Legacy-Referenz aus einem laufenden Rework und wird nicht
-mehr weiterentwickelt — nicht versehentlich dort Änderungen machen.
+**Stack: FastAPI + React (Docker, `backend`/`frontend`).** Die alte PHP/one.com-
+Variante ist entfernt und nur noch in der Git-Historie. Kommentare wie „Port von
+viewer.js“ beziehen sich auf sie. `data/` ist lokal nur noch der Bind-Mount für
+`docker-compose.yml`.
 
 ## Stack
 
